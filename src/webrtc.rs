@@ -16,12 +16,11 @@ use webrtc::{
     interceptor::registry::Registry,
     media::io::ogg_writer::OggWriter,
     peer_connection::{configuration::RTCConfiguration, RTCPeerConnection},
-    rtp_transceiver::{
-        rtp_codec::{RTCRtpCodecCapability, RTCRtpCodecParameters, RTPCodecType},
-        rtp_transceiver_direction::RTCRtpTransceiverDirection,
-        RTCRtpTransceiverInit,
+    rtp_transceiver::rtp_codec::{RTCRtpCodecCapability, RTCRtpCodecParameters, RTPCodecType},
+    track::{
+        track_local::{track_local_static_rtp::TrackLocalStaticRTP, TrackLocal},
+        track_remote::TrackRemote,
     },
-    track::track_remote::TrackRemote,
 };
 
 lazy_static::lazy_static! {
@@ -128,16 +127,34 @@ pub async fn start_webrtc_call_to_sip(room: Room) -> color_eyre::Result<Arc<RTCP
     // Create a new RTCPeerConnection
     let peer_connection = Arc::new(api.new_peer_connection(config).await?);
 
-    // This must exist.
-    peer_connection
-        .add_transceiver_from_kind(
-            RTPCodecType::Audio,
-            Some(RTCRtpTransceiverInit {
-                direction: RTCRtpTransceiverDirection::Recvonly,
-                send_encodings: vec![],
-            }),
-        )
+    // Create audio 2 way track
+    let audio_track = Arc::new(TrackLocalStaticRTP::new(
+        RTCRtpCodecCapability {
+            mime_type: MIME_TYPE_OPUS.to_owned(),
+            clock_rate: 48000,
+            channels: 2,
+            sdp_fmtp_line: "".to_owned(),
+            rtcp_feedback: vec![],
+        },
+        "audio".to_owned(),
+        "webrtc-rs".to_owned(),
+    ));
+
+    // TODO: We probably want this later when we start to negotiate so we can easily get the sender reference around
+    let _sender = peer_connection
+        .add_track(Arc::clone(&audio_track) as Arc<dyn TrackLocal + Send + Sync>)
         .await?;
+
+    // // This must exist.
+    // peer_connection
+    //     .add_transceiver_from_kind(
+    //         RTPCodecType::Audio,
+    //         Some(RTCRtpTransceiverInit {
+    //             direction: RTCRtpTransceiverDirection::Recvonly,
+    //             send_encodings: vec![],
+    //         }),
+    //     )
+    //     .await?;
 
     // Prepare udp conns
     // Also update incoming packets with expected PayloadType, the browser may use
