@@ -32,3 +32,5 @@ tracing-subscriber = "0.3.17"
 uuid = { version = "1.4.1", features = ["v4"] }
 webpki-roots = "0.25.2"
 webrtc = { git = "https://github.com/MTRNord/webrtc.git", branch = "MTRNord/sip-asterisk" }
+# https://github.com/serde-rs/serde/issues/2538
+serde = { version = "=1.0.171" }
