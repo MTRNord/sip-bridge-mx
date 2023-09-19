@@ -19,7 +19,7 @@ use tokio_rustls::{
     rustls::{ClientConfig, OwnedTrustAnchor},
     TlsConnector,
 };
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 use webrtc::peer_connection::{
     peer_connection_state::RTCPeerConnectionState, sdp::session_description::RTCSessionDescription,
@@ -181,6 +181,24 @@ pub async fn handle_sip_connection(
                     }
 
                    let _ = message.response_channel.send(responses);
+                } else {
+                    // If we have no commands in progress we can listen for incoming calls
+                     match frame.opcode {
+                        OpCode::Text | OpCode::Binary => {
+                            if !frame.payload.is_empty() {
+                                if let Ok(message) = String::from_utf8(frame.payload.to_vec()) {
+                                    // Empty and BYE responses cannot be parsed
+                                    if !message.is_empty() && !message.starts_with("BYE") && message != "\r\n\r\n" {
+                                        debug!("Got message: {:?}", message);
+                                        //responses.push(rsip::Response::try_from(message.as_str())?);
+                                    }
+                                } else {
+                                    warn!("Got invalid UTF-8 message");
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
                 }
            },
            _ = sleep(Duration::from_millis(500)) => {

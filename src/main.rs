@@ -25,6 +25,7 @@ use crate::{sip::send_invite, webrtc::start_webrtc_call_to_sip};
 mod db;
 mod sip;
 mod webrtc;
+mod matrix_types;
 
 #[derive(Parser)]
 #[command(author,version, about, long_about= None)]

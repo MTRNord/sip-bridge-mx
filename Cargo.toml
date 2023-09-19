@@ -34,3 +34,4 @@ webpki-roots = "0.25.2"
 webrtc = { git = "https://github.com/MTRNord/webrtc.git", branch = "MTRNord/sip-asterisk" }
 # https://github.com/serde-rs/serde/issues/2538
 serde = { version = "=1.0.171" }
+ruma-common = { version = "0.11.3", features = ["events"] }
